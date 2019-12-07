@@ -1,5 +1,5 @@
 {
-  "domain": "sensor",
+  "domain": "google_fit",
   "name": "Google Fit",
   "dependencies": [],
   "codeowners": ["@vmanuel"],
