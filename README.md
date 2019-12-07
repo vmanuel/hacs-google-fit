@@ -4,14 +4,14 @@
 
 Creates Google Fit sensors.
 At the moment, provides following measurements:
-    - steps
-    - distance
-    - time
-    - calories
-    - weight
-    - height
-    - sleep
-    - heartrate
+- steps
+- distance
+- time
+- calories
+- weight
+- height
+- sleep
+- heartrate
 Sensor is designed to be flexible and allow customization to add New Google Fit dimensions with minimal effort with relative knowledge of Python and Fitness Rest API.
 
 ## Example configuration.yaml
