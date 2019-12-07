@@ -2,6 +2,10 @@
 
 # Google Fit Sensor
 
+100% based and copied from:
+- https://github.com/zewelor/ha_custom_components/tree/master/google_fit
+- https://github.com/hemantkamalakar/haconfigs/tree/master/custom_components/google_fit
+
 Creates Google Fit sensors.
 At the moment, provides following measurements:
 - steps
@@ -12,6 +16,7 @@ At the moment, provides following measurements:
 - height
 - sleep
 - heartrate
+
 Sensor is designed to be flexible and allow customization to add New Google Fit dimensions with minimal effort with relative knowledge of Python and Fitness Rest API.
 
 ## Example configuration.yaml
@@ -31,8 +36,10 @@ To make sensor work you have to enable Fintness API in your project.
 In oder to enable Fitness API open Google cloud console: 
 https://console.cloud.google.com/apis/library/fitness.googleapis.com
 and enable API.
+
 It is recommendable to store client_id and client_secret as secret as possible. You can read about it on:
 https://www.home-assistant.io/docs/configuration/secrets/
+
 Example:
 ```
   - platform: google_fit
