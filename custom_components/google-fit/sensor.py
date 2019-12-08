@@ -444,6 +444,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
                     )
                 heart_data = heart_request.execute()
                 page_token = heart_data.get('nextPageToken')
+                _LOGGER.error("Pager: %s", page_token)
                 if not page_token:
                     break
                 heart_inserted_datapoints = heart_data.get('insertedDataPoint')
@@ -468,7 +469,6 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
 
             self._last_updated = round(last_time_update / 1000)
             self._state = last_heartrate
-            print(self.name, last_heartrate)
         self._attributes = {}
 
 
