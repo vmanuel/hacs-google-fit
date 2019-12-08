@@ -462,7 +462,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
 
             self._last_updated = round(last_time_update / 1000)
             self._state = last_heartrate
-            print(self.name, last_height)
+            print(self.name, last_heartrate)
         self._attributes = {}
 
 
