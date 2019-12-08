@@ -434,24 +434,30 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
         for datasource in heartrate_datasources:
             datasource_id = datasource.get('dataStreamId')
             datasource_id = 'derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm'
-            heart_request = self._client.users().dataSources().\
-                dataPointChanges().list(
-                    userId=API_USER_ID,
-                    dataSourceId=datasource_id,
-                )
-            heart_data = heart_request.execute()
-            heart_inserted_datapoints = heart_data.get('insertedDataPoint')
-            for datapoint in heart_inserted_datapoints:
-                point_value = datapoint.get('value')
-                if not point_value:
-                    continue
-                heartrate = point_value[0].get('fpVal')
-                if not heartrate:
-                    continue
-                last_update_milis = int(datapoint.get('modifiedTimeMillis', 0))
-                if not last_update_milis:
-                    continue
-                heart_datapoints[last_update_milis] = heartrate
+            page_token = None
+            while True:
+                heart_request = self._client.users().dataSources().\
+                    dataPointChanges().list(
+                        userId=API_USER_ID,
+                        dataSourceId=datasource_id,
+                        pageToken=page_token,
+                    )
+                heart_data = heart_request.execute()
+                page_token = heart_data.get('nextPageToken')
+                if not page_token:
+                    break
+                heart_inserted_datapoints = heart_data.get('insertedDataPoint')
+                for datapoint in heart_inserted_datapoints:
+                    point_value = datapoint.get('value')
+                    if not point_value:
+                        continue
+                    heartrate = point_value[0].get('fpVal')
+                    if not heartrate:
+                        continue
+                    last_update_milis = int(datapoint.get('modifiedTimeMillis', 0))
+                    if not last_update_milis:
+                        continue
+                    heart_datapoints[last_update_milis] = heartrate
 
         if heart_datapoints:
             time_updates = list(heart_datapoints.keys())
