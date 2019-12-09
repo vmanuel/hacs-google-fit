@@ -434,7 +434,6 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
         for datasource in heartrate_datasources:
             datasource_id = datasource.get('dataStreamId')
             datasource_id = 'derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm'
-            page_token = None
             heart_request = self._client.users().dataSources().\
                 dataPointChanges().list(
                     userId=API_USER_ID,
@@ -449,7 +448,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
                 heartrate = point_value[0].get('fpVal')
                 if not heartrate:
                     continue
-                last_update_milis = int(datapoint.get('modifiedTimeMillis', 0))
+                last_update_milis = int(datapoint.get('startTimeNanos', 0))
                 if not last_update_milis:
                     continue
                 heart_datapoints[last_update_milis] = heartrate
@@ -461,7 +460,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
             last_time_update = time_updates[0]
             last_heartrate = heart_datapoints[last_time_update]
 
-            self._last_updated = round(last_time_update / 1000)
+            self._last_updated = round(last_time_update / 1000000000)
             self._state = last_heartrate
             print(self.name, last_heartrate)
         self._attributes = {}
