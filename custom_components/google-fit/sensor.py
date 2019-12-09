@@ -433,7 +433,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
         heart_datapoints = {}
         for datasource in heartrate_datasources:
             datasource_id = datasource.get('dataStreamId')
-            datasource_id = 'derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm'
+            #datasource_id = 'derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm'
             heart_request = self._client.users().dataSources().\
                 dataPointChanges().list(
                     userId=API_USER_ID,
