@@ -438,6 +438,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
                 dataPointChanges().list(
                     userId=API_USER_ID,
                     dataSourceId=datasource_id,
+                    limit=1000,
                 )
             heart_data = heart_request.execute()
             heart_inserted_datapoints = heart_data.get('insertedDataPoint')
