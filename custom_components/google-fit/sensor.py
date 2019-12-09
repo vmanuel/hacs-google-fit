@@ -410,6 +410,9 @@ class GoogleFitHeightSensor(GoogleFitSensor):
 
 
 class GoogleFitHeartRateSensor(GoogleFitSensor):
+    DATA_SOURCE = "derived:com.google.heart_rate.bpm:com.google.android.gms:" \
+                  "merge_heart_rate_bpm"
+
     @property
     def unit_of_measurement(self):
         """Returns the unit of measurement."""
@@ -428,41 +431,21 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
     @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         """Extracts the relevant data points for from the Fitness API."""
-        heartrate_datasources = self._get_datasources('com.google.heart_rate.bpm')
 
-        heart_datapoints = {}
-        for datasource in heartrate_datasources:
-            datasource_id = datasource.get('dataStreamId')
-            #datasource_id = 'derived:com.google.heart_rate.bpm:com.google.android.gms:merge_heart_rate_bpm'
-            heart_request = self._client.users().dataSources().\
-                dataPointChanges().list(
-                    userId=API_USER_ID,
-                    dataSourceId=datasource_id,
-                )
-            heart_data = heart_request.execute()
-            heart_inserted_datapoints = heart_data.get('insertedDataPoint')
-            for datapoint in heart_inserted_datapoints:
-                point_value = datapoint.get('value')
-                if not point_value:
-                    continue
-                heartrate = point_value[0].get('fpVal')
-                if not heartrate:
-                    continue
-                last_update_milis = int(datapoint.get('startTimeNanos', 0))
-                if not last_update_milis:
-                    continue
-                heart_datapoints[last_update_milis] = heartrate
+        values = {}
+        for datapoint in self._get_dataset(self.DATA_SOURCE)["point"]:
+            datapoint_value = datapoint["value"][0]["fpVal"]
+            datapoint_value_ts= datapoint["startTimeNanos"]
+            values[datapoint_value_ts] = datapoint_value
 
-        if heart_datapoints:
-            time_updates = list(heart_datapoints.keys())
-            time_updates.sort(reverse=True)
-            _LOGGER.error("Received error from GoogLE FIT: %s", time_updates[0])
-            last_time_update = time_updates[0]
-            last_heartrate = heart_datapoints[last_time_update]
+        time_updates = list(values.keys())
+        time_updates.sort(reverse=True)
+        last_time_update = time_updates[0]
+        last_heartrate = values[last_time_update]
 
-            self._last_updated = round(last_time_update / 1000000000)
-            self._state = last_heartrate
-            print(self.name, last_heartrate)
+        self._last_updated = round(int(last_time_update) / 1000000000)
+        self._state = last_heartrate
+        #print(self.name, sum(values))
         self._attributes = {}
 
 
