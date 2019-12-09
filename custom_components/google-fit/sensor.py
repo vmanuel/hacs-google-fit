@@ -438,7 +438,6 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
                 dataPointChanges().list(
                     userId=API_USER_ID,
                     dataSourceId=datasource_id,
-                    limit=1000,
                 )
             heart_data = heart_request.execute()
             heart_inserted_datapoints = heart_data.get('insertedDataPoint')
@@ -457,7 +456,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
         if heart_datapoints:
             time_updates = list(heart_datapoints.keys())
             time_updates.sort(reverse=True)
-
+            _LOGGER.error("Received error from GoogLE FIT: %s", time_updates[0])
             last_time_update = time_updates[0]
             last_heartrate = heart_datapoints[last_time_update]
 
