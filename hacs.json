@@ -1,0 +1,5 @@
+{
+  "name": "Google Fit",
+  "render_readme": true,
+  "domains": ["sensor"]
+}
