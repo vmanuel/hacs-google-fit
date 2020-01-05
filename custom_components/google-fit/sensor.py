@@ -278,11 +278,13 @@ class GoogleFitSensor(entity.Entity):
 
     def _get_dataset(self, source):
         dataset = "%s-%s" % (_today_dataset_start(), _today_dataset_end())
-
-        return self._client.users().dataSources(). \
-            datasets(). \
-            get(userId=API_USER_ID, dataSourceId=source, datasetId=dataset). \
-            execute()
+        dataset_request = self._client.users().dataSources().datasets().get(
+            userId=API_USER_ID,
+            dataSourceId=source,
+            datasetId=dataset
+        )
+        data = dataset_request.execute()
+        return data
 
 class GoogleFitWeightSensor(GoogleFitSensor):
     @property
