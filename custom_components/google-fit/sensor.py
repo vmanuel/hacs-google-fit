@@ -213,7 +213,7 @@ class GoogleFitSensor(entity.Entity):
     @property
     def last_updated(self):
         """Returns date when it was last updated."""
-        if self._last_updated != 'unknown':
+        if isinstance(self._last_updated, int):
             stamp = float(self._last_updated)
             return utc_from_timestamp(int(stamp))
 
