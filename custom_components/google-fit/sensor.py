@@ -16,7 +16,7 @@ REQUIREMENTS = [
     'httplib2'
 ]
 
-_LOGGER = logging.getLogger(__name__)n
+_LOGGER = logging.getLogger(__name__)
 
 # Sensor details.
 SENSOR = 'google_fit'
@@ -58,6 +58,7 @@ STEPS = 'steps'
 MOVE_TIME = 'move time'
 CALORIES = 'calories'
 SLEEP = 'sleep'
+HEARTRATE = 'heart rate'
 TOKEN_FILE = ''
 
 # Endpoint scopes required for the sensor.
