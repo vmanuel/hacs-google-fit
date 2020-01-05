@@ -445,13 +445,13 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
 
         self._last_updated = round(int(last_time_update) / 1000000000)
         self._state = last_heartrate
-        #print(self.name, sum(values))
+        _LOGGER.debug("Last Heartrate %s", last_heartrate)
         self._attributes = {}
 
 
 class GoogleFitStepsSensor(GoogleFitSensor):
     DATA_SOURCE = "derived:com.google.step_count.delta:" \
-                  "com.google.android.gms:estimated_steps"
+        "com.google.android.gms:estimated_steps"
 
     @property
     def _name_suffix(self):
@@ -479,13 +479,13 @@ class GoogleFitStepsSensor(GoogleFitSensor):
 
         self._last_updated = time.time()
         self._state = sum(values)
-        #print(self.name, sum(values))
+        _LOGGER.debug("Steps %s", self._state)
         self._attributes = {}
 
 
 class GoogleFitMoveTimeSensor(GoogleFitSensor):
     DATA_SOURCE = "derived:com.google.active_minutes:" \
-                  "com.google.android.gms:merge_active_minutes"
+        "com.google.android.gms:merge_active_minutes"
 
     @property
     def _name_suffix(self):
@@ -513,13 +513,13 @@ class GoogleFitMoveTimeSensor(GoogleFitSensor):
 
         self._last_updated = time.time()
         self._state = sum(values)
-        #print(self.name, sum(values))
+        _LOGGER.debug("Move time %s", self._state)
         self._attributes = {}
 
 
 class GoogleFitCaloriesSensor(GoogleFitSensor):
     DATA_SOURCE = "derived:com.google.calories.expended:" \
-                  "com.google.android.gms:merge_calories_expended"
+        "com.google.android.gms:merge_calories_expended"
 
     @property
     def _name_suffix(self):
@@ -546,13 +546,13 @@ class GoogleFitCaloriesSensor(GoogleFitSensor):
 
         self._last_updated = time.time()
         self._state = round(sum(values))
-        #print(self.name, round(sum(values)))
+        _LOGGER.debug("Calories %s", self._state)
         self._attributes = {}
 
 
 class GoogleFitDistanceSensor(GoogleFitSensor):
     DATA_SOURCE = "derived:com.google.distance.delta:" \
-                  "com.google.android.gms:merge_distance_delta"
+        "com.google.android.gms:merge_distance_delta"
 
     @property
     def _name_suffix(self):
@@ -579,7 +579,7 @@ class GoogleFitDistanceSensor(GoogleFitSensor):
 
         self._last_updated = time.time()
         self._state = round(sum(values) / 1000, 2)
-        #print(self.name, round(sum(values) / 1000, 2))
+        _LOGGER.debug("Distance %s", self._state)
         self._attributes = {}
 
 class GoogleFitSleepSensor(GoogleFitSensor):
@@ -607,23 +607,27 @@ class GoogleFitSleepSensor(GoogleFitSensor):
         starttime = yesterday.isoformat("T") + "Z"
         today = datetime.now().replace(hour=11,minute=0,second=0,microsecond=0)
         endtime = today.isoformat("T") + "Z"
+        _LOGGER.debug("Starttime %s, Endtime %s", starttime, endtime)
         sleep_dataset =  self._client.users().sessions().list(userId='me',fields='session',startTime=starttime,endTime=endtime).execute()
         starts = []
         ends = []
         deep_sleep = []
         light_sleep = []
+        _LOGGER.debug("Sleep dataset %s", sleep_dataset)
         for point in sleep_dataset["session"]:
             if int(point["activityType"]) == 72 :
                 starts.append(int(point["startTimeMillis"]))
                 ends.append(int(point["endTimeMillis"]))
                 if  point["name"].startswith('Deep'):   
-                        deep_sleep_start = datetime.fromtimestamp(int(point["startTimeMillis"]) / 1000)
-                        deep_sleep_end = datetime.fromtimestamp(int(point["endTimeMillis"]) / 1000)
-                        deep_sleep.append(deep_sleep_end - deep_sleep_start)
+                    deep_sleep_start = datetime.fromtimestamp(int(point["startTimeMillis"]) / 1000)
+                    deep_sleep_end = datetime.fromtimestamp(int(point["endTimeMillis"]) / 1000)
+                    _LOGGER.debug("Deep Sleep dataset Total %s", (deep_sleep_end - deep_sleep_start))
+                    deep_sleep.append(deep_sleep_end - deep_sleep_start)
                 elif  point["name"].startswith('Light'):        
-                        light_sleep_start = datetime.fromtimestamp(int(point["startTimeMillis"]) / 1000)
-                        light_sleep_end = datetime.fromtimestamp(int(point["endTimeMillis"]) / 1000)
-                        light_sleep.append(light_sleep_end - light_sleep_start)
+                    light_sleep_start = datetime.fromtimestamp(int(point["startTimeMillis"]) / 1000)
+                    light_sleep_end = datetime.fromtimestamp(int(point["endTimeMillis"]) / 1000)
+                    _LOGGER.debug("Light Sleep dataset Total %s", (light_sleep_end - light_sleep_start))
+                    light_sleep.append(light_sleep_end - light_sleep_start)
         
         if len(starts) != 0 or len(ends) != 0:
             bed_time = datetime.fromtimestamp(round(min(starts) / 1000))
@@ -632,7 +636,6 @@ class GoogleFitSleepSensor(GoogleFitSensor):
             total_deep_sleep = sum(deep_sleep,timedelta())
             total_light_sleep = sum(light_sleep, timedelta())
             state_dict = dict({'bed_time': str(bed_time), 'wake_up_time': str(wake_up_time), 'sleep': str(total_sleep), 'deep_sleep': str(total_deep_sleep), 'light_sleep': str(total_light_sleep)})
-            #print(state_dict)
             self._state = str(total_sleep)
             self._attributes = state_dict
             self._last_updated = time.time()
