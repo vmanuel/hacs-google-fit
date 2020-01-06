@@ -454,7 +454,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
                 if not heartrate:
                     continue
                 last_update_milis = int(datapoint.get('modifiedTimeMillis', 0))
-                last_update_milis = int(datapoint.get('endTimeNanos')/1000000)
+                last_update_milis = int(int(datapoint.get('endTimeNanos'))/1000000)
                 if not last_update_milis:
                     continue
                 heart_datapoints[last_update_milis] = heartrate
