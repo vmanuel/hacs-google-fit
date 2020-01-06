@@ -440,14 +440,14 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
 
         time_updates = list(values.keys())
         time_updates.sort(reverse=True)
+        self._attributes = {}
         if not time_updates : return None
         last_time_update = time_updates[0]
         last_heartrate = values[last_time_update]
 
         self._last_updated = round(int(last_time_update) / 1000000000)
         self._state = last_heartrate
-        _LOGGER.debug("Last Heartrate %s", last_heartrate)
-        self._attributes = {}
+        _LOGGER.debug("Last Heartrate %s", last_heartrate)    
 
 
 class GoogleFitStepsSensor(GoogleFitSensor):
