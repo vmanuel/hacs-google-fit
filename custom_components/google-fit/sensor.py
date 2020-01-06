@@ -455,7 +455,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
                 if not last_update_milis:
                     continue
                 heart_datapoints[last_update_milis] = heartrate
-                _LOGGER.debug("Heart Rate Read: %s at %s", heartrate, originDataSourceId)
+                _LOGGER.debug("Heart Rate Read: %s in %s at %s", heartrate, originDataSourceId, last_update_milis)
 
         if heart_datapoints:
             time_updates = list(heart_datapoints.keys())
