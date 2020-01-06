@@ -291,7 +291,9 @@ class GoogleFitSensor(entity.Entity):
             execute()
 
     def _get_dataset_from_last_update(self, source):
-        dataset = "%s-%s" % (int(_today_dataset_start - 10800000000000), _today_dataset_end())
+        dataset_start = int(_today_dataset_start)
+        dataset_start = dataset_start -10800000000000
+        dataset = "%s-%s" % (dataset_start, _today_dataset_end())
 
         return self._client.users().dataSources(). \
             datasets(). \
