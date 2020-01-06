@@ -444,6 +444,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
             heart_data = heart_request.execute()
             heart_inserted_datapoints = heart_data.get('insertedDataPoint')
             for datapoint in heart_inserted_datapoints:
+                originDataSourceId = datapoint.get('originDataSourceId')
                 point_value = datapoint.get('value')
                 if not point_value:
                     continue
@@ -454,6 +455,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
                 if not last_update_milis:
                     continue
                 heart_datapoints[last_update_milis] = heartrate
+                _LOGGER.debug("Heart Rate Read: %s at %s", heartrate, originDataSourceId)
 
         if heart_datapoints:
             time_updates = list(heart_datapoints.keys())
