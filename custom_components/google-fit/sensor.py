@@ -458,7 +458,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
 
         self._last_updated = round(int(last_time_update) / 1000000000)
         self._state = last_heartrate
-        _LOGGER.debug("Last Heart Rate %s", last_heartrate)
+        _LOGGER.debug("Last Heart Rate %s at %s", last_heartrate, self._last_updated)
         self._attributes = {}
 
 
