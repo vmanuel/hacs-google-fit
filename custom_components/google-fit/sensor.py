@@ -445,6 +445,8 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
             heart_inserted_datapoints = heart_data.get('insertedDataPoint')
             for datapoint in heart_inserted_datapoints:
                 originDataSourceId = datapoint.get('originDataSourceId')
+                if not originDataSourceId:
+                    continue
                 point_value = datapoint.get('value')
                 if not point_value:
                     continue
