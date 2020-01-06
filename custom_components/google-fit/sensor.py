@@ -292,7 +292,7 @@ class GoogleFitSensor(entity.Entity):
 
     def _get_dataset_from_last_update(self, source):
         last_update = self.last_updated
-        return int(time.mktime(last_update.timetuple()) * 1000000000)
+        return int(time.mktime(last_update) * 1000000000)
         dataset = "%s-%s" % (last_update, _today_dataset_end())
 
         return self._client.users().dataSources(). \
@@ -449,7 +449,10 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
 
         time_updates = list(values.keys())
         time_updates.sort(reverse=True)
-        if time_updates is None: return None
+        if time_updates is None:
+            self._attributes = {}
+            return None
+        
         last_time_update = time_updates[0]
         last_heartrate = values[last_time_update]
 
