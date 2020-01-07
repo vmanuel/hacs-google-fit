@@ -449,7 +449,7 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
 
         time_updates = list(values.keys())
         time_updates.sort(reverse=True)
-        if time_updates is None:
+        if not time_updates:
             self._attributes = {}
             return None
         
