@@ -51,7 +51,8 @@ NOTIFICATION_TITLE = 'Google Fit Setup'
 # Google Fit API URL.
 API_VERSION = 'v1'
 API_USER_ID = 'me'
-WEIGHT = 'weight'
+WEIGHT_LBS = 'weight LBS'
+WEIGHT_KG = 'weight KG'
 HEIGHT = 'height'
 DISTANCE = 'distance'
 STEPS = 'steps'
@@ -69,13 +70,16 @@ SCOPES = ['https://www.googleapis.com/auth/fitness.body.read',
     'https://www.googleapis.com/auth/fitness.activity.read',
     'https://www.googleapis.com/auth/fitness.location.read']
 
+
 def _today_dataset_start():
     today = datetime.today().date()
     return int(time.mktime(today.timetuple()) * 1000000000)
 
+
 def _today_dataset_end():
     now = datetime.today()
     return int(time.mktime(now.timetuple()) * 1000000000)
+
 
 def _get_client(token_file):
         """Get the Google Fit service with the storage file token.
@@ -98,6 +102,7 @@ def _get_client(token_file):
         service = google_discovery.build(
             'fitness', API_VERSION, http=http, cache_discovery=False)
         return service
+
 
 def setup(hass, config):
     """Set up the Google Fit platform."""
@@ -179,7 +184,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
     token_file = hass.config.path(TOKEN_FILE)
     client = _get_client(token_file)
     
-    add_devices([GoogleFitWeightSensor(client, name),
+    add_devices([GoogleFitWeightLbsSensor(client,name),
+        GoogleFitWeightKGSensor(client, name),
         GoogleFitHeartRateSensor(client, name),
         GoogleFitHeightSensor(client, name),
         GoogleFitStepsSensor(client, name),
@@ -300,7 +306,8 @@ class GoogleFitSensor(entity.Entity):
             get(userId=API_USER_ID, dataSourceId=source, datasetId=dataset). \
             execute()
 
-class GoogleFitWeightSensor(GoogleFitSensor):
+
+class GoogleFitWeightKGSensor(GoogleFitSensor):
     @property
     def unit_of_measurement(self):
         """Returns the unit of measurement."""
@@ -314,7 +321,7 @@ class GoogleFitWeightSensor(GoogleFitSensor):
     @property
     def _name_suffix(self):
         """Returns the name suffix of the sensor."""
-        return WEIGHT
+        return WEIGHT_KG
 
     @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_UPDATES)
     def update(self):
@@ -359,6 +366,55 @@ class GoogleFitWeightSensor(GoogleFitSensor):
             self._state = last_weight
             _LOGGER.debug("Last weight %s", last_weight)
             self._attributes = {}
+
+
+class GoogleFitWeightLbsSensor(GoogleFitWeightKGSensor):
+    @property
+    def unit_of_measurement(self):
+        """Returns the unit of measurement."""
+        return const.MASS_POUNDS
+
+    @property
+    def icon(self):
+        """Return the icon."""
+        return 'mdi:weight-pound'
+
+    @property
+    def _name_suffix(self):
+        """Returns the name suffix of the sensor."""
+        return WEIGHT_LBS
+
+    @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_UPDATES)
+    def update(self):
+        """Extracts the relevant data points for from the Fitness API."""
+        if not self._client:
+            return
+
+        weight_datasources = self._get_datasources('com.google.weight')
+
+        weight_datapoints = {}
+        for datasource in weight_datasources:
+            datasource_id = datasource.get('dataStreamId')
+            weight_request = self._client.users().dataSources().\
+                dataPointChanges().list(
+                    userId=API_USER_ID,
+                    dataSourceId=datasource_id,
+                )
+            weight_data = weight_request.execute()
+            weight_inserted_datapoints = weight_data.get('insertedDataPoint')
+
+            for datapoint in weight_inserted_datapoints:
+                point_value = datapoint.get('value')
+                if not point_value:
+                    continue
+                weight = point_value[0].get('fpVal')
+                if not weight:
+                    continue
+                weight = round(weight * 2.20462262185, 2) # Convert to pounds while rounding
+                last_update_milis = int(datapoint.get('modifiedTimeMillis', 0))
+                if not last_update_milis:
+                    continue
+                weight_datapoints[last_update_milis] = weight
 
 
 class GoogleFitHeightSensor(GoogleFitSensor):
@@ -460,8 +516,6 @@ class GoogleFitHeartRateSensor(GoogleFitSensor):
         self._state = last_heartrate
         _LOGGER.debug("Last Heart Rate %s at %s", last_heartrate, self._last_updated)
         self._attributes = {}
-
-
 
 
 class GoogleFitStepsSensor(GoogleFitSensor):
@@ -596,6 +650,7 @@ class GoogleFitDistanceSensor(GoogleFitSensor):
         self._state = round(sum(values) / 1000, 2)
         _LOGGER.debug("Distance %s", self._state)
         self._attributes = {}
+
 
 class GoogleFitSleepSensor(GoogleFitSensor):
     
