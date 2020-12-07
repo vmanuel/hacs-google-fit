@@ -368,7 +368,7 @@ class GoogleFitWeightKGSensor(GoogleFitSensor):
             self._attributes = {}
 
 
-class GoogleFitWeightLbsSensor(GoogleFitWeightKGSensor):
+class GoogleFitWeightLbsSensor(GoogleFitSensor):
     @property
     def unit_of_measurement(self):
         """Returns the unit of measurement."""
@@ -415,6 +415,18 @@ class GoogleFitWeightLbsSensor(GoogleFitWeightKGSensor):
                 if not last_update_milis:
                     continue
                 weight_datapoints[last_update_milis] = weight
+
+        if weight_datapoints:
+            time_updates = list(weight_datapoints.keys())
+            time_updates.sort(reverse=True)
+
+            last_time_update = time_updates[0]
+            last_weight = weight_datapoints[last_time_update]
+
+            self._last_updated = round(last_time_update / 1000)
+            self._state = last_weight
+            _LOGGER.debug("Last weight %s", last_weight)
+            self._attributes = {}
 
 
 class GoogleFitHeightSensor(GoogleFitSensor):
