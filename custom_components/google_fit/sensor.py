@@ -27,8 +27,8 @@ CONF_CLIENT_ID = 'client_id'
 CONF_CLIENT_SECRET = 'client_secret'
 DEFAULT_NAME = 'Google Fit'
 ICON = 'mdi:heart-pulse'
-MIN_TIME_BETWEEN_SCANS = timedelta(minutes=10)
-MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=10)
+MIN_TIME_BETWEEN_SCANS = timedelta(minutes=8)
+MIN_TIME_BETWEEN_UPDATES = timedelta(minutes=8)
 SENSOR_NAME = '{} {}'
 
 
@@ -54,7 +54,8 @@ API_USER_ID = 'me'
 WEIGHT_LBS = 'weight (lbs)'
 WEIGHT_KG = 'weight (kg)'
 HEIGHT = 'height'
-DISTANCE = 'distance'
+DISTANCE_KM = 'distance (km)'
+DISTANCE_MI = 'distance (mi)'
 STEPS = 'steps'
 MOVE_TIME = 'move time'
 CALORIES = 'calories'
@@ -192,7 +193,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         GoogleFitSleepSensor(client, name),
         GoogleFitMoveTimeSensor(client, name),
         GoogleFitCaloriesSensor(client, name),
-        GoogleFitDistanceSensor(client, name)], True)
+        GoogleFitDistanceKmSensor(client, name),
+        GoogleFitDistanceMiSensor(client, name)], True)
 
 
 class GoogleFitSensor(entity.Entity):
@@ -631,14 +633,14 @@ class GoogleFitCaloriesSensor(GoogleFitSensor):
         self._attributes = {}
 
 
-class GoogleFitDistanceSensor(GoogleFitSensor):
+class GoogleFitDistanceKmSensor(GoogleFitSensor):
     DATA_SOURCE = "derived:com.google.distance.delta:" \
         "com.google.android.gms:merge_distance_delta"
 
     @property
     def _name_suffix(self):
         """Returns the name suffix of the sensor."""
-        return DISTANCE
+        return DISTANCE_KM
 
     @property
     def unit_of_measurement(self):
@@ -660,6 +662,38 @@ class GoogleFitDistanceSensor(GoogleFitSensor):
 
         self._last_updated = time.time()
         self._state = round(sum(values) / 1000, 2)
+        _LOGGER.debug("Distance %s", self._state)
+        self._attributes = {}
+
+class GoogleFitDistanceMiSensor(GoogleFitSensor):
+    DATA_SOURCE = "derived:com.google.distance.delta:" \
+        "com.google.android.gms:merge_distance_delta"
+
+    @property
+    def _name_suffix(self):
+        """Returns the name suffix of the sensor."""
+        return DISTANCE_MI
+
+    @property
+    def unit_of_measurement(self):
+        """Returns the unit of measurement."""
+        return const.LENGTH_MILES
+
+    @property
+    def icon(self):
+        """Return the icon."""
+        return 'mdi:map-marker-distance'
+
+    @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_UPDATES)
+    def update(self):
+        """Extracts the relevant data points for from the Fitness API."""
+        values = []
+        for point in self._get_dataset(self.DATA_SOURCE)["point"]:
+            if int(point["startTimeNanos"]) > _today_dataset_start():
+                values.append(point['value'][0]['fpVal'])
+
+        self._last_updated = time.time()
+        self._state = round(sum(values) / 1000 * 0.62137119, 2)
         _LOGGER.debug("Distance %s", self._state)
         self._attributes = {}
 
