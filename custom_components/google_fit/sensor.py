@@ -771,7 +771,7 @@ class GoogleFitMeditationSensor(GoogleFitSensor):
     @property
     def unit_of_measurement(self):
         """Returns the unit of measurement."""
-        return MEDITATION
+        return 'min'
 
     @property
     def icon(self):
@@ -805,9 +805,8 @@ class GoogleFitMeditationSensor(GoogleFitSensor):
             start_time = datetime.fromtimestamp(round(min(starts) / 1000))
             end_time = datetime.fromtimestamp(round(max(ends) / 1000))
             total_meditation = sum(meditation,timedelta())
-            total_meditation=total_meditation-timedelta(microseconds=total_meditation.microseconds)
             state_dict = dict({'first_start_time': str(start_time), 'last_end_time': str(end_time), 'total_meditation': str(total_meditation)})
-            self._state = str(total_meditation)
+            self._state = total_meditation.total_seconds() // 60
             self._attributes = state_dict
             self._last_updated = time.time()
         else:    
