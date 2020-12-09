@@ -60,6 +60,7 @@ STEPS = 'steps'
 MOVE_TIME = 'move time'
 CALORIES = 'calories'
 SLEEP = 'sleep'
+MEDITATION = 'meditation'
 HEARTRATE = 'heart rate'
 TOKEN_FILE = ''
 
@@ -79,7 +80,7 @@ def _today_dataset_start():
 
 def _today_dataset_end():
     now = datetime.today()
-    return int(time.mktime(now.timetuple()) * 1000000000)
+    return int(time.mktime(now.timetuple()) * 1000000000 + 1)
 
 
 def _get_client(token_file):
@@ -191,6 +192,7 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         GoogleFitHeightSensor(client, name),
         GoogleFitStepsSensor(client, name),
         GoogleFitSleepSensor(client, name),
+        GoogleFitMeditationSensor(client, name),
         GoogleFitMoveTimeSensor(client, name),
         GoogleFitCaloriesSensor(client, name),
         GoogleFitDistanceKmSensor(client, name),
@@ -698,8 +700,7 @@ class GoogleFitDistanceMiSensor(GoogleFitSensor):
         self._attributes = {}
 
 
-class GoogleFitSleepSensor(GoogleFitSensor):
-    
+class GoogleFitSleepSensor(GoogleFitSensor):   
     @property
     def _name_suffix(self):
         """Returns the name suffix of the sensor."""
@@ -753,6 +754,60 @@ class GoogleFitSleepSensor(GoogleFitSensor):
             total_light_sleep = sum(light_sleep, timedelta())
             state_dict = dict({'bed_time': str(bed_time), 'wake_up_time': str(wake_up_time), 'sleep': str(total_sleep), 'deep_sleep': str(total_deep_sleep), 'light_sleep': str(total_light_sleep)})
             self._state = str(total_sleep)
+            self._attributes = state_dict
+            self._last_updated = time.time()
+        else:    
+            self._state = ""
+            self._attributes = {}
+            self._last_updated = time.time()
+
+
+class GoogleFitMeditationSensor(GoogleFitSensor):
+    @property
+    def _name_suffix(self):
+        """Returns the name suffix of the sensor."""
+        return MEDITATION
+
+    @property
+    def unit_of_measurement(self):
+        """Returns the unit of measurement."""
+        return MEDITATION
+
+    @property
+    def icon(self):
+        """Return the icon."""
+        return 'mdi:meditation'
+
+    @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_UPDATES)
+    def update(self):
+        """Extracts the relevant data points for from the Fitness API."""
+        yesterday = datetime.now().replace(hour=17,minute=0,second=0,microsecond=0)
+        yesterday = yesterday - timedelta(days=1)
+        starttime = yesterday.isoformat("T") + "Z"
+        today = datetime.now().replace(hour=11,minute=0,second=0,microsecond=0)
+        endtime = today.isoformat("T") + "Z"
+        _LOGGER.debug("Starttime %s, Endtime %s", starttime, endtime)
+        meditation_dataset =  self._client.users().sessions().list(userId='me',fields='session',startTime=starttime,endTime=endtime).execute()
+        starts = []
+        ends = []
+        meditation = []
+        _LOGGER.debug("Meditation dataset %s", meditation_dataset)
+        for point in meditation_dataset["session"]:
+            if int(point["activityType"]) == 45 : # https://developers.google.com/fit/rest/v1/reference/activity-types
+                starts.append(int(point["startTimeMillis"]))
+                ends.append(int(point["endTimeMillis"]))
+                meditation_start = datetime.fromtimestamp(int(point["startTimeMillis"]) / 1000)
+                meditation_end = datetime.fromtimestamp(int(point["endTimeMillis"]) / 1000)
+                _LOGGER.debug("Meditation dataset Total %s", (meditation_end - meditation_start))
+                meditation.append(meditation_end - meditation_start)
+        
+        if len(starts) != 0 or len(ends) != 0:
+            start_time = datetime.fromtimestamp(round(min(starts) / 1000))
+            end_time = datetime.fromtimestamp(round(max(ends) / 1000))
+            total_meditation = sum(meditation,timedelta())
+            total_meditation=total_meditation-timedelta(microseconds=total_meditation.microseconds)
+            state_dict = dict({'first_start_time': str(start_time), 'last_end_time': str(end_time), 'total_meditation': str(total_meditation)})
+            self._state = str(total_meditation)
             self._attributes = state_dict
             self._last_updated = time.time()
         else:    
