@@ -68,9 +68,11 @@ TOKEN_FILE = ''
 # Read more: https://developers.google.com/fit/rest/v1/authorization
 
 SCOPES = ['https://www.googleapis.com/auth/fitness.body.read',
-    'https://www.googleapis.com/auth/fitness.body.write',
+    'https://www.googleapis.com/auth/fitness.sleep.read',
+    'https://www.googleapis.com/auth/fitness.heart_rate.read',
     'https://www.googleapis.com/auth/fitness.activity.read',
-    'https://www.googleapis.com/auth/fitness.location.read']
+    'https://www.googleapis.com/auth/fitness.location.read',
+    ]
 
 
 def _today_dataset_start():
