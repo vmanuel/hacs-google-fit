@@ -62,6 +62,7 @@ CALORIES = 'calories'
 SLEEP = 'sleep'
 MEDITATION = 'meditation'
 HEARTRATE = 'heart rate'
+BLOOD_PRESSURE = 'blood pressure'
 TOKEN_FILE = ''
 
 # Endpoint scopes required for the sensor.
@@ -72,6 +73,7 @@ SCOPES = ['https://www.googleapis.com/auth/fitness.body.read',
     'https://www.googleapis.com/auth/fitness.heart_rate.read',
     'https://www.googleapis.com/auth/fitness.activity.read',
     'https://www.googleapis.com/auth/fitness.location.read',
+    'https://www.googleapis.com/auth/fitness.blood_pressure.read',
     ]
 
 
@@ -198,7 +200,8 @@ def setup_platform(hass, config, add_devices, discovery_info=None):
         GoogleFitMoveTimeSensor(client, name),
         GoogleFitCaloriesSensor(client, name),
         GoogleFitDistanceKmSensor(client, name),
-        GoogleFitDistanceMiSensor(client, name)], True)
+        GoogleFitDistanceMiSensor(client, name),
+        GoogleFitBloodPressureSensor(client, name),], True)
 
 
 class GoogleFitSensor(entity.Entity):
@@ -815,3 +818,48 @@ class GoogleFitMeditationSensor(GoogleFitSensor):
             self._state = ""
             self._attributes = {}
             self._last_updated = time.time()
+
+class GoogleFitBloodPressureSensor(GoogleFitSensor):
+    DATA_SOURCE = "derived:com.google.blood_pressure:com.google.android.gms:" \
+        "merged"
+
+    @property
+    def _name_suffix(self):
+        """Returns the name suffix of the sensor."""
+        return BLOOD_PRESSURE
+
+    @property
+    def unit_of_measurement(self):
+        """Returns the unit of measurement."""
+        return 'mmHg (sys/dia)'
+
+    @property
+    def icon(self):
+        """Return the icon."""
+        return 'mdi:heart-pulse'
+
+    @util.Throttle(MIN_TIME_BETWEEN_SCANS, MIN_TIME_BETWEEN_UPDATES)
+    def update(self):
+        """Extracts the relevant data points for from the Fitness API."""
+        values = {}
+        for datapoint in self._get_dataset_from_last_update(self.DATA_SOURCE)["point"]:
+            datapoint_value = datapoint["value"][0]["fpVal"]
+            diastolic_datapoint_value = datapoint["value"][1]["fpVal"]
+            bloodpressure_string = str(datapoint_value) + "/" + str(diastolic_datapoint_value)
+            datapoint_value_ts = datapoint["startTimeNanos"]
+            values[datapoint_value_ts] = bloodpressure_string
+
+        time_updates = list(values.keys())
+        time_updates.sort(reverse=True)
+        if not time_updates:
+            self._attributes = {}
+            return None
+
+        last_time_update = time_updates[0]
+        last_bloodpressure = values[last_time_update]
+        self._last_updated = round(int(last_time_update) / 1000000000)
+        self._state = last_bloodpressure
+        _LOGGER.debug("Last BloodPressure selfstate %s at %s", self._state, self._last_updated)
+        self._attributes = {}
+        self._attributes['sys'] = datapoint_value
+        self._attributes['dia'] = diastolic_datapoint_value
