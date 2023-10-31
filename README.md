@@ -2,6 +2,8 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Default-orange.svg?style=for-the-badge)](https://github.com/custom-components/hacs)
 
+### Without maintenance. Use https://github.com/YorkshireIoT/ha-google-fit
+
 100% based and copied from:
 
 - <https://github.com/zewelor/ha_custom_components/tree/master/google_fit>
